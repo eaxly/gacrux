@@ -82,11 +82,11 @@ umount $root_part
 mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
 
 ask "Did you create an EFI partition? [y/n]" "EFI"
-read efi_part
-if [[ ${efi_part,,} = "y"* ]]; then
+read efi
+if [[ ${efi,,} = "y"* ]]; then
     lsblk
     ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
-    read efi
+    read efi_part
     while ! blkid $efi_part &> /dev/null; do
         err "$efi_part does not exist" "EFI"
         lsblk
