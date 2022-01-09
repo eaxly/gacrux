@@ -73,21 +73,38 @@ while ! blkid $drive &> /dev/null; do
     read drive
 done
 cfdisk $drive
+lsblk
+ask "Enter ROOT Partition: "
+read root_part
+while [ -z $root_part ]; do
+    err "$root_part doesn't exist\nUnfortunately, you can't install stuff on something inexistent."
+    ask "Enter ROOT Partition: "
+    read root_part
+done
+mkfs.btrfs -L "root_pool"
+mount $root_part /mnt/
+btrfs subvolume create /mnt/@
+umount $root_part
+mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
+
 ask "Did you create an EFI partition? [y/n]" "EFI"
 read efi_part
 if [[ ${efi_part,,} = "y"* ]]; then
     lsblk
     ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
     read efi
-    while ! blkid $efi &> /dev/null; do
-        err "$efi does not exist" "EFI"
+    while ! blkid $efi_part &> /dev/null; do
+        err "$efi_part does not exist" "EFI"
         lsblk
         ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
         read efi
     done
-    mkfs.fat -F32 $efi
+    mkfs.fat -F32 $efi_part
+    mkdir -p /mnt/boot
+    mount $efi_part /mnt/boot
 fi
-ask "Did you create an SWAP partition? [y/n]" "SWAP"
+
+ask "Did you create a SWAP partition? [y/n]" "SWAP"
 read swap_part
 if [[ ${swap_part,,} = "y"* ]]; then
     lsblk
@@ -100,18 +117,10 @@ if [[ ${swap_part,,} = "y"* ]]; then
         read swap
     done
     mkswap $swap
+    swapon $swap
 fi
-echo -e "\e[2J\e[H"
-lsblk
-ask "Enter ROOT Partition: "
-read root_part
-while [ -z $root_part ]; do
-    err "$root_part doesn't exist\nUnfortunately, you can't install stuff on something inexistent."
-    ask "Enter ROOT Partition: "
-    read root_part
-done
-mkfs.btrfs -L "root_pool"
-ask "Did you create an HOME partition? [y/n]" "HOME"
+
+ask "Did you create a HOME partition? [y/n]" "HOME"
 read home_part
 if [[ ${home_part,,} = "y"* ]]; then
     lsblk
@@ -124,4 +133,9 @@ if [[ ${home_part,,} = "y"* ]]; then
         read home
     done
     mkfs.btrfs -L "home_pool" $home
+    mkdir -p /mnt/home
+    mount $home /mnt/home
+    btrfs subvolume create /mnt/home/@home
+    umount $home
+    mount -o rw,noatime,compress=zstd:3,subvol=/@home $home /mnt/home
 fi
