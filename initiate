@@ -8,7 +8,7 @@ bold="\e[1m"
 italic="\e[3m"
 nc="\e[m"
 
-trap 'printf "$red${bold}Exited.\n" && exit' INT
+trap 'printf "\e[2K\e[2C${green}${bold}Wise choice.\n" && exit' INT
 
 ok() {
     pre_ok="$bold${black}[${green}OK${black}]${nc}: $italic"
@@ -34,11 +34,11 @@ ask() {
     echo -en $pre_ask"${1}${nc}"
 }
 
-if [ ! $1 = "-s" ]; then
+if [ -z $1 ]; then
     echo -e "${red}${bold}DO NOT UTILIZE THIS WITHOUT READING THE SCRIPT!"$nc
     sleep 1
     echo -e "${red}${bold}I WILL NOT BE RESPONSIBLE IF THIS BREAKS STUFF!"$nc
-    sleep 2
+    sleep 1
 fi
 
 # Part 1
@@ -101,6 +101,7 @@ while [ -z $root_part ]; do
     ask "Enter ROOT Partition: "
     read root_part
 done
+mkfs.btrfs -L "root_pool"
 ask "Did you create an HOME partition? [y/n]" "HOME"
 read home_part
 if [[ ${home_part,,} = "y"* ]]; then
@@ -113,5 +114,5 @@ if [[ ${home_part,,} = "y"* ]]; then
         ask "What is the name of your HOME Partition" "HOME"
         read home
     done
-    mkfs.btrfs -L "home" $home
+    mkfs.btrfs -L "home_pool" $home
 fi
