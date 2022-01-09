@@ -75,7 +75,7 @@ while [ -z $root_part ]; do
     ask "Enter ROOT Partition: "
     read root_part
 done
-mkfs.btrfs -L "root_pool" $root_part
+mkfs.btrfs -f -L "root_pool" $root_part
 mount $root_part /mnt/
 btrfs subvolume create /mnt/@
 umount $root_part
@@ -126,7 +126,7 @@ if [[ ${home_part,,} = "y"* ]]; then
         ask "What is the name of your HOME Partition" "HOME"
         read home
     done
-    mkfs.btrfs -L "home_pool" $home_part
+    mkfs.btrfs -f -L "home_pool" $home_part
     mkdir -p /mnt/home
     mount $home_part /mnt/home
     btrfs subvolume create /mnt/home/@home
