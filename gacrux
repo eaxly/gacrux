@@ -64,14 +64,8 @@ else
     ok "Success.\n" "PING"
 fi
 lsblk
-ask "Enter Drive: " "DRIVE"
+ask "Enter Drive: " "!DRIVE"
 read drive
-while ! blkid $drive &> /dev/null; do
-    err "$drive does not exist." "DRIVE"
-    lsblk
-    ask "The Drive needs to exist (×_×): " "DRIVE"
-    read drive
-done
 cfdisk $drive
 lsblk
 ask "Enter ROOT Partition: "
@@ -81,7 +75,7 @@ while [ -z $root_part ]; do
     ask "Enter ROOT Partition: "
     read root_part
 done
-mkfs.btrfs -L "root_pool"
+mkfs.btrfs -L "root_pool" $root_part
 mount $root_part /mnt/
 btrfs subvolume create /mnt/@
 umount $root_part
@@ -126,16 +120,16 @@ if [[ ${home_part,,} = "y"* ]]; then
     lsblk
     ask "Enter home Partition (exp: /dev/sda2): " "HOME"
     read home
-    while ! blkid $home &> /dev/null; do
-        err "$home does not exist" "HOME"
+    while ! blkid $home_part &> /dev/null; do
+        err "$home_part does not exist" "HOME"
         lsblk
         ask "What is the name of your HOME Partition" "HOME"
         read home
     done
-    mkfs.btrfs -L "home_pool" $home
+    mkfs.btrfs -L "home_pool" $home_part
     mkdir -p /mnt/home
-    mount $home /mnt/home
+    mount $home_part /mnt/home
     btrfs subvolume create /mnt/home/@home
-    umount $home
-    mount -o rw,noatime,compress=zstd:3,subvol=/@home $home /mnt/home
+    umount $home_part
+    mount -o rw,noatime,compress=zstd:3,subvol=/@home $home_part /mnt/home
 fi
