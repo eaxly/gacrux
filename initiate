@@ -48,7 +48,7 @@ if [ -d /sys/firmware/efi/efivars ]; then
 else
     ok "Undetected.\n" "EFI"
 fi
-# timedatectl set-ntp true
+timedatectl set-ntp true
 if ! ping -c3 archlinux.org -W3 &> /dev/null; then
     err "Failure.\n" "PING"
 else
