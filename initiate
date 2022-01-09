@@ -1,0 +1,117 @@
+#!/usr/bin/env bash
+# stuff
+black="\e[38;5;8m"
+red="\e[38;5;1m"
+green="\e[38;5;2m"
+yellow="\e[38;5;3m"
+bold="\e[1m"
+italic="\e[3m"
+nc="\e[m"
+
+trap 'printf "$red${bold}Exited.\n" && exit' INT
+
+ok() {
+    pre_ok="$bold${black}[${green}OK${black}]${nc}: $italic"
+    if [ $# -ge 2 ]; then
+        pre_ok="$bold${black}[${green}${2}${black}]${nc}: $italic"
+    fi
+    echo -en $pre_ok"${1}${nc}"
+}
+
+err() {
+    pre_err="$bold${black}[${red}ERR${black}]${nc}: $italic"
+    if [ $# -ge 2 ]; then
+        pre_err="$bold${black}[${red}${2}${black}]${nc}: $italic"
+    fi
+    echo -en $pre_err"${1}${nc}"
+}
+
+ask() {
+    pre_ask="$bold${black}[${yellow}ASK${black}]${nc}: $italic"
+    if [ $# -ge 2 ]; then
+        pre_ask="$bold${black}[${yellow}${2}${black}]${nc}: $italic"
+    fi
+    echo -en $pre_ask"${1}${nc}"
+}
+
+if [ ! $1 = "-s" ]; then
+    echo -e "${red}${bold}DO NOT UTILIZE THIS WITHOUT READING THE SCRIPT!"$nc
+    sleep 1
+    echo -e "${red}${bold}I WILL NOT BE RESPONSIBLE IF THIS BREAKS STUFF!"$nc
+    sleep 2
+fi
+
+# Part 1
+loadkeys de-latin1
+if [ -d /sys/firmware/efi/efivars ]; then
+    ok "Detected.\n" "EFI"
+else
+    ok "Undetected.\n" "EFI"
+fi
+# timedatectl set-ntp true
+if ! ping -c3 archlinux.org -W3 &> /dev/null; then
+    err "Failure.\n" "PING"
+else
+    ok "Success.\n" "PING"
+fi
+lsblk
+ask "Enter Drive: " "DRIVE"
+read drive
+while ! blkid $drive &> /dev/null; do
+    err "$drive does not exist." "DRIVE"
+    lsblk
+    ask "The Drive needs to exist (×_×): " "DRIVE"
+    read drive
+done
+cfdisk $drive
+ask "Did you create an EFI partition? [y/n]" "EFI"
+read efi_part
+if [[ ${efi_part,,} = "y"* ]]; then
+    lsblk
+    ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
+    read efi
+    while ! blkid $efi &> /dev/null; do
+        err "$efi does not exist" "EFI"
+        lsblk
+        ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
+        read efi
+    done
+    mkfs.fat -F32 $efi
+fi
+ask "Did you create an SWAP partition? [y/n]" "SWAP"
+read swap_part
+if [[ ${swap_part,,} = "y"* ]]; then
+    lsblk
+    ask "Enter Swap Partition (exp: /dev/sda2): " "SWAP"
+    read swap
+    while ! blkid $swap &> /dev/null; do
+        err "$swap does not exist" "SWAP"
+        lsblk
+        ask "What is the name of your SWAP Partition" "SWAP"
+        read swap
+    done
+    mkswap $swap
+fi
+echo -e "\e[2J\e[H"
+lsblk
+ask "Enter ROOT Partition: "
+read root_part
+while [ -z $root_part ]; do
+    err "$root_part doesn't exist\nUnfortunately, you can't install stuff on something inexistent."
+    ask "Enter ROOT Partition: "
+    read root_part
+done
+ask "Did you create an HOME partition? [y/n]" "HOME"
+read home_part
+if [[ ${home_part,,} = "y"* ]]; then
+    lsblk
+    ask "Enter home Partition (exp: /dev/sda2): " "HOME"
+    read home
+    while ! blkid $home &> /dev/null; do
+        err "$home does not exist" "HOME"
+        lsblk
+        ask "What is the name of your HOME Partition" "HOME"
+        read home
+    done
+    mkfs.btrfs -L "home" $home
+fi

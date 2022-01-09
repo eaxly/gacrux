@@ -1,0 +1,13 @@
+@document.meta
+    title: todo
+    description: todo's for angst or however I am going to call this
+    authors: axolotl
+    categories: 
+    created: 2022-01-09
+    version: 0.0.9
+@end
+* TODO
+  - [ ] EFI Partition
+  - [ ] Swap Partition
+  - [ ] Root Partition
+  - [ ] Home Partition
