@@ -38,9 +38,17 @@ if [ -z $1 ]; then
     echo -e "${red}${bold}DO NOT UTILIZE THIS WITHOUT READING THE SCRIPT!"$nc
     sleep 1
     echo -e "${red}${bold}I WILL NOT BE RESPONSIBLE IF THIS BREAKS STUFF!"$nc
-    sleep 1
+    sleep 2
 fi
 
+echo -e "\e[2J\e[H"
+echo -e "Welcome to\n"
+echo -e "▞▀▖               ▞▀▖         ▗    "
+echo -e "▌▄▖▝▀▖▛▚▀▖▛▚▀▖▝▀▖ ▌  ▙▀▖▌ ▌▞▀▘▄ ▞▀▘"
+echo -e "▌ ▌▞▀▌▌▐ ▌▌▐ ▌▞▀▌ ▌ ▖▌  ▌ ▌▝▀▖▐ ▝▀▖"
+echo -e "▝▀ ▝▀▘▘▝ ▘▘▝ ▘▝▀▘ ▝▀ ▘  ▝▀▘▀▀ ▀▘▀▀"
+sleep 1
+echo -e "short: \"Gacrux\""
 # Part 1
 loadkeys de-latin1
 if [ -d /sys/firmware/efi/efivars ]; then

@@ -1,4 +1,4 @@
-# Initiation of Arch
+# Gacrux
 *My* Arch Linux installation script.
 Don't attempt to use it, before reading the script.
 
