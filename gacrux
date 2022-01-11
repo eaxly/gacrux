@@ -23,7 +23,7 @@ err() {
     if [ $# -ge 2 ]; then
         pre_err="$bold${black}[${red}${2}${black}]${nc}: $italic"
     fi
-    echo -en $pre_err"${1}${nc}"
+    echo -e $pre_err"${1}${nc}"
 }
 
 ask() {
@@ -144,5 +144,80 @@ fi
 sleep 2
 ok "Pacstrapping..." "PACSTRAP"
 pacstrap /mnt/ base base-devel linux linux-firmware neovim dhcpcd networkmanager btrfs-progs zstd sed
-
+ok "Generating Fstab..." "FSTAB"
 genfstab -U /mnt >> /mnt/etc/fstab
+ok "Please check if there are any errors in the fstab file." "FSTAB"
+sleep 1
+vim /mnt/etc/fstab
+sleep 1
+ok "Now chroot into /mnt" "CHROOT"
+ok "And run gacrux2" "CHROOT"
+sleep 1
+sed "/^#init$/,/^#initexit$/d" gacrux > /mnt/gacrux2
+exit
+#initexit
+
+#chroot
+ask "Timezone: " "TZ"
+read timezone
+while [ -f /usr/share/zoneinfo/"$timezone" ]; do
+    err "Incorrect timezone"
+    ask "Timezone: " "TZ"
+    read timezone
+done
+hwclock --systohc
+ok "Uncomment locales." "LOCALE"
+sleep 1
+nvim /etc/locale.gen
+sleep 2
+locale-gen
+ask "Enter LANG variable: " "LANG"
+read lang
+while [ -z "$lang" ] && cat /etc/locale.gen | grep "$lang"; do
+    
+    err "Can't be empty." "LANG"
+    ask "Enter LANG variable: " "LANG"
+    read lang
+done
+echo "LANG=$lang" > /etc/locale.conf
+echo "KEYMAP=de-latin1" > /etc/vconsole.conf
+ask "Enter hostname: " "HSTNM"
+read hostname
+while [ -z hostname ]; do
+    err "Hostname empty"
+    ask "Enter hostname: " "HSTNM"
+    read hostname
+done
+echo "$hostname" > /etc/hostname
+pacman -S intel-ucode
+mkinitcpio -P
+ask "Enter Root Password.\n"
+passwd
+ask "EFI (1) or MBR (2): " "GRUB"
+read grub_type
+if [ $grub_type = "2" ]; then
+    pacman -S grub
+    ask "Enter Grub Drive: (exp /dev/sda) " "!DRIVE"
+    read drive
+    while [ -z "$drive" ]; do 
+        err "Drive can't be empty." "!DRIVE"
+        ask "Enter Grub Drive: (exp /dev/sda) " "!DRIVE"
+        read drive
+    done
+    grub-install --target=i368-pc "$drive"
+elif [ $grub_type = "1" ]; then
+    pacman -S grub efibootmgr
+    ask "Enter Grub EFI parition Mount point: (exp: /boot) "
+    read efi_mnt
+    while [ -z "$efi_mnt" ] && [ ! -d "$efi_mnt" ]; do
+        err "Inexistent."
+        ask "Enter Grub EFI parition Mount point: (exp: /boot) "
+        read efi_mnt
+    done
+    grub-install --target=x86_64-efi --efi-directory="$efi_mnt" --bootloader-id=GRUB
+else
+    ok "Bootloader's are BLOAT." "┻━┻ ︵ ¯\(ツ)/¯ ︵ ┻━┻"
+fi
+ok "You can reboot now."
+exit
+#chrootexit
