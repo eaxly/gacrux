@@ -153,9 +153,9 @@ sleep 1
 ok "Now chroot into /mnt" "CHROOT"
 ok "And run gacrux2" "CHROOT"
 sleep 1
-sed "/^#init$/,/^#initexit$/d" gacrux > /mnt/gacrux2
+sed "/^#live$/,/^#liveexit$/d" gacrux > /mnt/gacrux2
 exit
-#initexit
+#liveexit
 
 #chroot
 ask "Timezone: " "TZ"
