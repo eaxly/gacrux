@@ -50,7 +50,8 @@ echo -e "▌ ▌▞▀▌▌▐ ▌▌▐ ▌▞▀▌ ▌ ▖▌  ▌ ▌▌ �
 echo -e "▝▀ ▝▀▘▘▝ ▘▘▝ ▘▝▀▘ ▝▀ ▘  ▝▀▘▝▀ ▀▘▀▀ "
 sleep 1
 echo -e "short: \"Gacrux\""
-# Part 1
+
+#live
 loadkeys de-latin1
 if [ -d /sys/firmware/efi/efivars ]; then
     ok "Detected.\n" "EFI"
@@ -133,3 +134,15 @@ if [[ ${home_part,,} = "y"* ]]; then
     umount $home_part
     mount -o rw,noatime,compress=zstd:3,subvol=/@home $home_part /mnt/home
 fi
+echo -e "${yellow}${bold}Please be patient, whilst the mirrors are getting synced."$nc
+reflector --latest 20 --sort rate --save /etc/pacman.d/mirrorlist --protocol https --download-timeout 1
+if [ $? -eq 0 ]; then
+    ok "Synced." "MIRROR"
+else
+    err "Sync failed. Error Code: $?" "MIRROR"
+fi
+sleep 2
+ok "Pacstrapping..." "PACSTRAP"
+pacstrap /mnt/ base base-devel linux linux-firmware neovim dhcpcd networkmanager btrfs-progs zstd sed
+
+genfstab -U /mnt >> /mnt/etc/fstab
