@@ -190,7 +190,18 @@ while [ -z hostname ]; do
     read hostname
 done
 echo "$hostname" > /etc/hostname
-pacman -S intel-ucode
+echo "127.0.0.1        localhost" >> /etc/hosts
+echo "::1              localhost" >> /etc/hosts
+echo "127.0.1.1        $hostname" >> /etc/hosts
+ask "Enter CPU Type [intel/amd]: " "!UCODE"
+read cpu_type
+if [[ $cpu_type,, = "i"* ]]; then
+    pacman -S intel-ucode
+elif [[ $cpu_type,, = "a"* ]]; then
+    pacman -S amd-ucode
+else
+    ok "Who needs Cpu's anyway!?" "(._.)"
+fi
 mkinitcpio -P
 ask "Enter Root Password.\n"
 passwd
@@ -208,7 +219,7 @@ if [ $grub_type = "2" ]; then
     grub-install --target=i386-pc "$drive"
 elif [ $grub_type = "1" ]; then
     pacman -S grub efibootmgr
-    ask "Enter Grub EFI parition Mount point: (exp: /boot) "
+    ask "Enter Grub EFI partition Mount point: (exp: /boot) "
     read efi_mnt
     while [ -z "$efi_mnt" ] && [ ! -d "$efi_mnt" ]; do
         err "Inexistent."
@@ -216,8 +227,13 @@ elif [ $grub_type = "1" ]; then
         read efi_mnt
     done
     grub-install --target=x86_64-efi --efi-directory="$efi_mnt" --bootloader-id=GRUB
+    if [ ! $? -eq 0 ]; then
+        err "Something wen't wrong.\n" "GRUB"
+        echo "The command that was used is: "
+        echo "grub-install --target=x86_64-efi --efi-directory="$efi_mnt" --bootloader-id=GRUB"
+    fi
 else
-    ok "Bootloader's are BLOAT." "┻━┻ ︵ ¯\(ツ)/¯ ︵ ┻━┻"
+    ok "Bootloader's are BLOAT.\n" "(._.)"
 fi
 ok "You can reboot now."
 exit
