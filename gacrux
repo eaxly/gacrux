@@ -92,6 +92,7 @@ umount $root_part
 mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
 ask "Did you create a HOME partition? [y/n]" "HOME"
 read home_part
+mkdir -p /mnt/home
 if [[ ${home_part,,} = "y"* ]]; then
     lsblk
     ask "Enter home Partition (exp: /dev/sda2): " "HOME"
@@ -103,7 +104,6 @@ if [[ ${home_part,,} = "y"* ]]; then
         read home
     done
     mkfs.btrfs -f -L "home_pool" $home_part
-    mkdir -p /mnt/home
     mount $home_part /mnt/home
     btrfs subvolume create /mnt/home/@home
     umount $home_part
