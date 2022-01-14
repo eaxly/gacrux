@@ -67,7 +67,16 @@ fi
 lsblk
 ask "Enter Drive: " "!DRIVE"
 read drive
-cfdisk $drive
+ask "Do you wan't to use cfdisk or cgdisk for format?"
+read part_make
+if [[ $part_make,, = "cf"* ]]; then
+    cfdisk "$drive"
+elif [[ $part_make,, = "cg"* ]]; then
+    cgdisk "$drive"
+else
+    ok "Defaulting to cgdisk."
+    cgdisk $driver
+fi
 lsblk
 ask "Enter ROOT Partition: "
 read root_part
@@ -81,6 +90,32 @@ mount $root_part /mnt/
 btrfs subvolume create /mnt/@
 umount $root_part
 mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
+ask "Did you create a HOME partition? [y/n]" "HOME"
+read home_part
+if [[ ${home_part,,} = "y"* ]]; then
+    lsblk
+    ask "Enter home Partition (exp: /dev/sda2): " "HOME"
+    read home
+    while ! blkid $home_part &> /dev/null; do
+        err "$home_part does not exist" "HOME"
+        lsblk
+        ask "What is the name of your HOME Partition" "HOME"
+        read home
+    done
+    mkfs.btrfs -f -L "home_pool" $home_part
+    mkdir -p /mnt/home
+    mount $home_part /mnt/home
+    btrfs subvolume create /mnt/home/@home
+    umount $home_part
+    mount -o rw,noatime,compress=zstd:3,subvol=/@home $home_part /mnt/home
+else
+    umount $root_part
+    mount $root_part /mnt/
+    btrfs subvol create /mnt/@home
+    umount $root_part
+    mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
+    mount -o rw,noatime,compress=zstd:3,subvol=/@home $root_part /mnt/home
+fi
 
 ask "Did you create an EFI partition? [y/n]" "EFI"
 read efi
@@ -115,25 +150,6 @@ if [[ ${swap_part,,} = "y"* ]]; then
     swapon $swap
 fi
 
-ask "Did you create a HOME partition? [y/n]" "HOME"
-read home_part
-if [[ ${home_part,,} = "y"* ]]; then
-    lsblk
-    ask "Enter home Partition (exp: /dev/sda2): " "HOME"
-    read home
-    while ! blkid $home_part &> /dev/null; do
-        err "$home_part does not exist" "HOME"
-        lsblk
-        ask "What is the name of your HOME Partition" "HOME"
-        read home
-    done
-    mkfs.btrfs -f -L "home_pool" $home_part
-    mkdir -p /mnt/home
-    mount $home_part /mnt/home
-    btrfs subvolume create /mnt/home/@home
-    umount $home_part
-    mount -o rw,noatime,compress=zstd:3,subvol=/@home $home_part /mnt/home
-fi
 echo -e "${yellow}${bold}Please be patient, whilst the mirrors are getting synced."$nc
 reflector --latest 20 --sort rate --save /etc/pacman.d/mirrorlist --protocol https --download-timeout 1
 if [ $? -eq 0 ]; then
