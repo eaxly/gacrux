@@ -227,22 +227,16 @@ if [ $grub_type = "2" ]; then
     grub-install --target=i386-pc "$drive"
 elif [ $grub_type = "1" ]; then
     pacman -S grub efibootmgr
-    ask "Enter Grub EFI partition Mount point: (exp: /boot) "
-    read efi_mnt
-    while [ -z "$efi_mnt" ] && [ ! -d "$efi_mnt" ]; do
-        err "Inexistent."
-        ask "Enter Grub EFI parition Mount point: (exp: /boot) "
-        read efi_mnt
-    done
-    grub-install --target=x86_64-efi --efi-directory="$efi_mnt" --bootloader-id=GRUB
+    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=ArchLinux
     if [ ! $? -eq 0 ]; then
         err "Something wen't wrong.\n" "GRUB"
         echo "The command that was used is: "
         echo "grub-install --target=x86_64-efi --efi-directory="$efi_mnt" --bootloader-id=GRUB"
+    else
+        grub-mkconfig -o /boot/grub/grub.cfg
     fi
 else
     ok "Bootloader's are BLOAT.\n" "(._.)"
 fi
-ok "You can reboot now."
 exit
 #chrootexit
