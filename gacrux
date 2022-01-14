@@ -129,9 +129,9 @@ if [[ ${efi,,} = "y"* ]]; then
         ask "Enter EFI Partition (exp: /dev/sda1): " "EFI"
         read efi
     done
-    mkfs.fat -F32 $efi_part
+    mkfs.fat -F 32 "$efi_part"
     mkdir -p /mnt/boot
-    mount $efi_part /mnt/boot
+    mount "$efi_part" /mnt/boot
 fi
 
 ask "Did you create a SWAP partition? [y/n]" "SWAP"
@@ -150,14 +150,6 @@ if [[ ${swap_part,,} = "y"* ]]; then
     swapon $swap
 fi
 
-echo -e "${yellow}${bold}Please be patient, whilst the mirrors are getting synced."$nc
-reflector --latest 20 --sort rate --save /etc/pacman.d/mirrorlist --protocol https --download-timeout 1
-if [ $? -eq 0 ]; then
-    ok "Synced." "MIRROR"
-else
-    err "Sync failed. Error Code: $?" "MIRROR"
-fi
-sleep 2
 ok "Pacstrapping..." "PACSTRAP"
 pacstrap /mnt/ base base-devel linux linux-firmware neovim dhcpcd networkmanager btrfs-progs zstd sed
 ok "Generating Fstab..." "FSTAB"
