@@ -91,12 +91,12 @@ btrfs subvolume create /mnt/@
 umount $root_part
 mount -o rw,noatime,compress=zstd:3,subvol=/@ $root_part /mnt/
 ask "Did you create a HOME partition? [y/n]" "HOME"
-read home_part
+read home
 mkdir -p /mnt/home
 if [[ ${home_part,,} = "y"* ]]; then
     lsblk
     ask "Enter home Partition (exp: /dev/sda2): " "HOME"
-    read home
+    read home_part
     while ! blkid $home_part &> /dev/null; do
         err "$home_part does not exist" "HOME"
         lsblk
