@@ -103,7 +103,11 @@ if [[ ${home_part,,} = "y"* ]]; then
         ask "What is the name of your HOME Partition" "HOME"
         read home
     done
-    mkfs.btrfs -f -L "home_pool" $home_part
+    ask "Format drive?" "HOME"
+    read format_home
+    if [[ "${format_home,,}" = "y"* ]]; then
+        mkfs.btrfs -f -L "home_pool" $home_part
+    fi
     mount $home_part /mnt/home
     btrfs subvolume create /mnt/home/@home
     umount $home_part
